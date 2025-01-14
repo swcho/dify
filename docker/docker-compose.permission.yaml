@@ -390,10 +390,17 @@ x-shared-env: &shared-api-worker-env
   MAX_SUBMIT_COUNT: ${MAX_SUBMIT_COUNT:-100}
   TOP_K_MAX_VALUE: ${TOP_K_MAX_VALUE:-10}
 
+x-shared-permission: &permission_setting
+  user: ${UID:-}
+  group_add:
+    - ${GID:-}
+
 services:
+  
   # API service
   api:
-    image: langgenius/dify-api:0.15.2
+    <<: *permission_setting
+    image: langgenius/dify-api:0.15.1
     restart: always
     environment:
       # Use the shared environment variables.
@@ -416,7 +423,8 @@ services:
   # worker service
   # The Celery worker for processing the queue.
   worker:
-    image: langgenius/dify-api:0.15.2
+    <<: *permission_setting
+    image: langgenius/dify-api:0.15.1
     restart: always
     environment:
       # Use the shared environment variables.
@@ -438,7 +446,7 @@ services:
 
   # Frontend web application.
   web:
-    image: langgenius/dify-web:0.15.2
+    image: langgenius/dify-web:0.15.1
     restart: always
     environment:
       CONSOLE_API_URL: ${CONSOLE_API_URL:-}
@@ -448,13 +456,10 @@ services:
       TEXT_GENERATION_TIMEOUT_MS: ${TEXT_GENERATION_TIMEOUT_MS:-60000}
       CSP_WHITELIST: ${CSP_WHITELIST:-}
       TOP_K_MAX_VALUE: ${TOP_K_MAX_VALUE:-}
-      INDEXING_MAX_SEGMENTATION_TOKENS_LENGTH: ${INDEXING_MAX_SEGMENTATION_TOKENS_LENGTH:-}
 
   # The postgres database.
   db:
-    user: '502'
-    group_add:
-      - '20'
+    <<: *permission_setting
     image: postgres:15-alpine
     restart: always
     environment:
@@ -478,9 +483,7 @@ services:
 
   # The redis cache.
   redis:
-    user: '502'
-    group_add:
-      - '20'
+    <<: *permission_setting
     image: redis:6-alpine
     restart: always
     environment:
@@ -495,6 +498,7 @@ services:
 
   # The DifySandbox
   sandbox:
+    <<: *permission_setting
     image: langgenius/dify-sandbox:0.2.10
     restart: always
     environment:
@@ -519,6 +523,7 @@ services:
   # for more information, please refer to
   # https://docs.dify.ai/learn-more/faq/install-faq#id-18.-why-is-ssrf_proxy-needed
   ssrf_proxy:
+    <<: *permission_setting
     image: ubuntu/squid:latest
     restart: always
     volumes:
@@ -539,6 +544,7 @@ services:
   # Certbot service
   # use `docker-compose --profile certbot up` to start the certbot service.
   certbot:
+    <<: *permission_setting
     image: certbot/certbot
     profiles:
       - certbot
@@ -559,6 +565,7 @@ services:
   # The nginx reverse proxy.
   # used for reverse proxying the API service and Web service.
   nginx:
+    <<: *permission_setting
     image: nginx:latest
     restart: always
     volumes:
@@ -599,6 +606,7 @@ services:
   # The TiDB vector store.
   # For production use, please refer to https://github.com/pingcap/tidb-docker-compose
   tidb:
+    <<: *permission_setting
     image: pingcap/tidb:v8.4.0
     profiles:
       - tidb
@@ -608,6 +616,7 @@ services:
 
   # The Weaviate vector store.
   weaviate:
+    <<: *permission_setting
     image: semitechnologies/weaviate:1.19.0
     profiles:
       - ''
@@ -633,6 +642,7 @@ services:
   # Qdrant vector store.
   # (if used, you need to set VECTOR_STORE to qdrant in the api & worker service.)
   qdrant:
+    <<: *permission_setting
     image: langgenius/qdrant:v1.7.3
     profiles:
       - qdrant
@@ -644,6 +654,7 @@ services:
 
   # The Couchbase vector store.
   couchbase-server:
+    <<: *permission_setting
     build: ./couchbase-server
     profiles:
       - couchbase
@@ -677,6 +688,7 @@ services:
 
   # The pgvector vector database.
   pgvector:
+    <<: *permission_setting
     image: pgvector/pgvector:pg16
     profiles:
       - pgvector
@@ -699,6 +711,7 @@ services:
 
   # pgvecto-rs vector store
   pgvecto-rs:
+    <<: *permission_setting
     image: tensorchord/pgvecto-rs:pg16-v0.3.0
     profiles:
       - pgvecto-rs
@@ -721,6 +734,7 @@ services:
 
   # Chroma vector database
   chroma:
+    <<: *permission_setting
     image: ghcr.io/chroma-core/chroma:0.5.20
     profiles:
       - chroma
@@ -734,6 +748,7 @@ services:
 
   # OceanBase vector database
   oceanbase:
+    <<: *permission_setting
     image: quay.io/oceanbase/oceanbase-ce:4.3.3.0-100000142024101215
     profiles:
       - oceanbase
@@ -751,6 +766,7 @@ services:
 
   # Oracle vector database
   oracle:
+    <<: *permission_setting
     image: container-registry.oracle.com/database/free:latest
     profiles:
       - oracle
@@ -766,6 +782,7 @@ services:
 
   # Milvus vector database services
   etcd:
+    <<: *permission_setting
     container_name: milvus-etcd
     image: quay.io/coreos/etcd:v3.5.5
     profiles:
@@ -787,6 +804,7 @@ services:
       - milvus
 
   minio:
+    <<: *permission_setting
     container_name: milvus-minio
     image: minio/minio:RELEASE.2023-03-20T20-16-18Z
     profiles:
@@ -806,6 +824,7 @@ services:
       - milvus
 
   milvus-standalone:
+    <<: *permission_setting
     container_name: milvus-standalone
     image: milvusdb/milvus:v2.5.0-beta
     profiles:
@@ -834,6 +853,7 @@ services:
 
   # Opensearch vector database
   opensearch:
+    <<: *permission_setting
     container_name: opensearch
     image: opensearchproject/opensearch:latest
     profiles:
@@ -856,6 +876,7 @@ services:
       - opensearch-net
 
   opensearch-dashboards:
+    <<: *permission_setting
     container_name: opensearch-dashboards
     image: opensearchproject/opensearch-dashboards:latest
     profiles:
@@ -871,6 +892,7 @@ services:
 
   # MyScale vector database
   myscale:
+    <<: *permission_setting
     container_name: myscale
     image: myscale/myscaledb:1.6.4
     profiles:
@@ -887,6 +909,7 @@ services:
   # https://www.elastic.co/guide/en/elasticsearch/reference/current/settings.html
   # https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html#docker-prod-prerequisites
   elasticsearch:
+    <<: *permission_setting
     image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
     container_name: elasticsearch
     profiles:
@@ -922,6 +945,7 @@ services:
   # https://www.elastic.co/guide/en/kibana/current/docker.html
   # https://www.elastic.co/guide/en/kibana/current/settings.html
   kibana:
+    <<: *permission_setting
     image: docker.elastic.co/kibana/kibana:8.14.3
     container_name: kibana
     profiles:
